@@ -162,9 +162,7 @@
         }
 
         #spotifyCarousel:hover ~ .cursor-dot,
-        #spotifyCarousel:hover ~ .cursor-ring,
-        #discoverCarousel:hover ~ .cursor-dot,
-        #discoverCarousel:hover ~ .cursor-ring {
+        #spotifyCarousel:hover ~ .cursor-ring {
             opacity: 0 !important;
         }
 
@@ -198,11 +196,16 @@
             align-items: center;
             padding: 24px 60px;
             z-index: 50;
+            background: transparent;
+            border-bottom: 1px solid transparent;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease, border-color 0.3s ease, backdrop-filter 0.3s ease;
+        }
+
+        nav.nav-scrolled {
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             background: rgba(2, 2, 2, 0.75);
             border-bottom: 1px solid var(--glass-border);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s, border-color 0.3s;
         }
 
         nav.nav-hidden {
@@ -413,7 +416,7 @@
             cursor: grabbing;
         }
 
-        /* Discover Section Carousel */
+        /* Discover / Music Section */
         .discover-section {
             position: relative;
             max-width: 1400px;
@@ -449,24 +452,13 @@
             font-weight: 600;
         }
 
-        .discover-carousel {
-            width: 100%;
-            overflow: hidden;
-            position: relative;
-            border-radius: 20px;
-            user-select: none;
-        }
-
-        .discover-track {
-            display: flex;
-            width: max-content;
+        .discover-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
             gap: 30px;
-            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-            will-change: transform;
         }
 
         .discover-card {
-            width: 580px;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 16px;
@@ -477,12 +469,6 @@
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s, box-shadow 0.4s;
             position: relative;
             overflow: hidden;
-            flex-shrink: 0;
-            cursor: grab;
-        }
-
-        .discover-card:active {
-            cursor: grabbing;
         }
 
         .discover-card:hover {
@@ -495,7 +481,6 @@
             border-radius: 10px;
             display: block;
             background: transparent;
-            pointer-events: auto;
         }
 
         /* Master Framed Discography Container */
@@ -672,7 +657,7 @@
             .nav-links { display: none; }
             .hero { padding: 40px 30px; }
             .hero-content { flex-direction: column; align-items: flex-start; }
-            .discover-card { width: 100%; max-width: 100%; }
+            .discover-grid { grid-template-columns: 1fr; }
             .discover-section { padding: 80px 25px; }
             .albums-section-wrapper { padding: 35px 20px; }
             .albums-grid { grid-template-columns: 1fr; }
@@ -748,15 +733,13 @@
             </div>
         </div>
         
-        <div class="discover-carousel interactive" id="discoverCarousel">
-            <div class="discover-track" id="discoverTrack">
-                <div class="discover-card">
-                    <iframe id="spotifyWidget1" data-testid="embed-iframe" src="https://open.spotify.com/embed/track/4QIEgpcSZOSSnzk35E7MAZ?utm_source=generator&theme=0&si=bb9377f60a8f458a" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-                </div>
+        <div class="discover-grid">
+            <div class="discover-card interactive">
+                <iframe id="spotifyWidget1" data-testid="embed-iframe" src="https://open.spotify.com/embed/track/4QIEgpcSZOSSnzk35E7MAZ?utm_source=generator&theme=0&si=bb9377f60a8f458a" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            </div>
 
-                <div class="discover-card">
-                    <iframe id="spotifyWidget2" data-testid="embed-iframe" src="https://open.spotify.com/embed/track/7qjqgr5E2GTZ65tLZBJ0Zg?utm_source=generator&theme=0&si=52675e65f28a4523" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
-                </div>
+            <div class="discover-card interactive">
+                <iframe id="spotifyWidget2" data-testid="embed-iframe" src="https://open.spotify.com/embed/track/7qjqgr5E2GTZ65tLZBJ0Zg?utm_source=generator&theme=0&si=52675e65f28a4523" width="100%" height="352" frameborder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
             </div>
         </div>
     </section>
@@ -873,7 +856,7 @@
 
         document.querySelectorAll('.interactive').forEach(el => {
             el.addEventListener('mouseenter', () => {
-                if (!el.closest('#spotifyCarousel') && !el.closest('#discoverCarousel')) {
+                if (!el.closest('#spotifyCarousel')) {
                     document.body.classList.add('cursor-hover');
                 }
             });
@@ -887,7 +870,7 @@
             card.addEventListener('mouseleave', () => document.body.classList.remove('img-cursor-active'));
         });
 
-        // Hero Swipeable Carousel Logic
+        // Swipeable Carousel Control Logic
         const carouselTrack = document.getElementById('carouselTrack');
         const carouselContainer = document.getElementById('spotifyCarousel');
         
@@ -947,68 +930,18 @@
             carouselTrack.style.transform = `translateX(${currentTranslate}px)`;
         }
 
-        // Discover Section Swipeable Carousel Logic
-        const discoverTrack = document.getElementById('discoverTrack');
-        const discoverContainer = document.getElementById('discoverCarousel');
-        
-        let dIsDragging = false;
-        let dStartPos = 0;
-        let dCurrentTranslate = 0;
-        let dPrevTranslate = 0;
-        let dCurrentIndex = 0;
-        const dItemWidth = 610; // card width (580px) + gap (30px)
-        const dTotalItems = discoverTrack.children.length;
-
-        discoverContainer.addEventListener('mousedown', dDragStart);
-        discoverContainer.addEventListener('mousemove', dDragMove);
-        window.addEventListener('mouseup', dDragEnd);
-
-        discoverContainer.addEventListener('touchstart', dDragStart);
-        discoverContainer.addEventListener('touchmove', dDragMove);
-        window.addEventListener('touchend', dDragEnd);
-
-        function dDragStart(e) {
-            dIsDragging = true;
-            dStartPos = getPositionX(e);
-            discoverTrack.style.transition = 'none';
-        }
-
-        function dDragMove(e) {
-            if (!dIsDragging) return;
-            const currentPosition = getPositionX(e);
-            const currentDiff = currentPosition - dStartPos;
-            dCurrentTranslate = dPrevTranslate + currentDiff;
-            discoverTrack.style.transform = `translateX(${dCurrentTranslate}px)`;
-        }
-
-        function dDragEnd() {
-            if (!dIsDragging) return;
-            dIsDragging = false;
-            
-            const movedBy = dCurrentTranslate - dPrevTranslate;
-
-            if (movedBy < -50 && dCurrentIndex < dTotalItems - 1) {
-                dCurrentIndex++;
-            } else if (movedBy > 50 && dCurrentIndex > 0) {
-                dCurrentIndex--;
-            }
-
-            dSetPositionByIndex();
-        }
-
-        function dSetPositionByIndex() {
-            dCurrentTranslate = dCurrentIndex * -dItemWidth;
-            dPrevTranslate = dCurrentTranslate;
-            discoverTrack.style.transition = 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-            discoverTrack.style.transform = `translateX(${dCurrentTranslate}px)`;
-        }
-
         let lastScrollTop = 0;
         const navElement = document.querySelector('nav');
         const scrollThreshold = 60;
 
         window.addEventListener('scroll', () => {
             let currentScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+
+            if (currentScrollTop > 20) {
+                navElement.classList.add('nav-scrolled');
+            } else {
+                navElement.classList.remove('nav-scrolled');
+            }
 
             if (currentScrollTop > lastScrollTop && currentScrollTop > scrollThreshold) {
                 navElement.classList.add('nav-hidden');
